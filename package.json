@@ -1,0 +1,35 @@
+{
+  "name": "petitservice",
+  "version": "1.0.0",
+  "description": "Set of modules designed for Microservice architecture",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RefurbMe/petitservice.git"
+  },
+  "author": "Mohammed Elalj",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RefurbMe/petitservice/issues"
+  },
+  "homepage": "https://github.com/RefurbMe/petitservice",
+  "dependencies": {
+    "@google/cloud-debug": "^0.9.1",
+    "@google/cloud-errors": "^0.1.1",
+    "@google/cloud-trace": "^0.6.0",
+    "amqplib": "^0.5.1",
+    "bluebird": "^3.4.7",
+    "body-parser": "^1.15.2",
+    "cache-manager": "2.3.0",
+    "cache-manager-redis": "0.3.2",
+    "compression": "^1.6.2",
+    "express-winston": "^2.1.2",
+    "knex": "^0.12.6",
+    "pg": "^6.1.2",
+    "request": "^2.79.0",
+    "winston": "^2.3.0"
+  }
+}
