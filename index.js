@@ -8,7 +8,7 @@ const gcloud = require('./lib/gcloud');
 const logger = require('./lib/logger');
 const publisher = require('./lib/publisher');
 const serviceLoader = require('./lib/serviceLoader');
-const utils = require('./lib/serviceLoader');
+const utils = require('./lib/utils');
 
 module.exports = {
   db,
