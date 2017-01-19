@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/RefurbMe/petitservice.git"
+    "url": "https://github.com/melalj/petitservice.git"
   },
   "author": "Mohammed Elalj",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/RefurbMe/petitservice/issues"
+    "url": "https://github.com/melalj/petitservice/issues"
   },
-  "homepage": "https://github.com/RefurbMe/petitservice",
+  "homepage": "https://github.com/melalj/petitservice",
   "dependencies": {
     "@google/cloud-debug": "^0.9.1",
     "@google/cloud-errors": "^0.1.1",

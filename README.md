@@ -1,4 +1,9 @@
-# PetitService.js
+# Petit Service 🍬
+
+[![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://github.com/melalj/petitservice)
+[![GitHub stars](https://img.shields.io/github/stars/melalj/petitservice.svg?style=social&label=Star&maxAge=2592005)]()
+
+[![npm](https://img.shields.io/npm/dt/petitservice.svg)]() [![npm](https://img.shields.io/npm/v/petitservice.svg)]() [![npm](https://img.shields.io/npm/l/petitservice.svg)]() [![David](https://img.shields.io/david/melalj/petitservice.svg)]()
 
 Set of modules designed for Microservice architecture.
 
@@ -19,25 +24,27 @@ Supported features:
 ### Full Example:
 
 ```js
-const serviceLoader = require('petitservice/lib/service_loader');
+const petitservice = require('petitservice');
 
-return serviceLoader()
+return petitservice.serviceLoader()
 .ping([
   config.apiUrlHost,
   config.redisHost,
   config.amqpHost,
 ])
 .cache(config.redisUrl)
-.publisher(config.amqUrl, ['exchange-name1', 'exchange-name1'])
+.publisher(config.amqUrl, ['exchange-name1', 'exchange-name2'])
 .then(() => {
-  /* Some logic here */
-  return Promise.resolve(true);
+  /* Some logic here when we load the service (should return a Promise)*/
 })
 .db({
   pgUrl: config.pgUrl,
   pgDatabase: config.pgDatabase,
 })
 .express(() => require('./express_app.js'), config.httpPort)
+.onExit(() => {
+  /* Some logic here when we exit (should return a Promise)*/
+})
 .done();
 ```
 
@@ -52,9 +59,9 @@ return serviceLoader()
   - `options.pgDatabase` (string, database to query, default: postgres)
   - `options.failureMax` (integer, how many attempts should we try before we exit the process, default: 5)
   - `options.frequency` (integer, how many milliseconds should wait before checking again the database, default: 30000)
-- *cache(redisUrl)*: Start cache for `petitservice/lib/cache`
+- *cache(redisUrl)*: Start cache for `petitservice.cache`
   - `redisUrl` (required string, redis url)
-- *publisher(amqUrl, publisherExchanges)*: Connect to RabbitMQ and assert exchanges for `petitservice/lib/publisher`, and close it when exit
+- *publisher(amqUrl, publisherExchanges)*: Connect to RabbitMQ and assert exchanges for `petitservice.publisher`, and close it when exit
   - `amqUrl` (required string, amq url)
   - `publisherExchanges` (required array, list of exchanges to assert)
 - *coworkers(options)*: Connect to RabbitMQ using coworkers, and close it when exit. `options` is required.
@@ -73,16 +80,113 @@ return serviceLoader()
   - `customPromise` (function that returns a Promise)
 
 
+## Cache
+
+Cache manager using Redis
+
+### Full example
+
+```js
+const petitservice = require('petitservice');
+const cache = petitservice.cache;
+
+cache.start(config.redisUrl);
+
+const userId = 12;
+const getUser = (userId) => models.getUser(userId);
+
+// Get / Set / Delete
+const cacheKey = 'bob';
+cache.getValue(cacheKey)
+.then((cachedValue) => {
+  if (!cachedValue) {
+    petitservice.logger.info(`Setting value for ${cacheKey}`);
+    return cache.getValue(cacheKey, 'alice', 60);
+  }
+  petitservice.logger.info(`I remember ${cachedValue}`);
+})
+.then((cachedValue) => {
+  petitservice.logger.info(`Bye ${cacheKey}`);
+  return cache.delValue(cacheKey);
+});
+
+// Wrap a function
+cache.wrap(userId, () => models.getUser(userId), 10)
+.then((cacheUser) => {
+  petitservice.logger.info(`Bonjour ${cacheUser.firstName}`);
+});
+
+// Delayed Execution
+const id = 'abc';
+const prm = () => {
+  return models.insertKeystroke(Math.random());
+}
+cache.delayedExec(id, prm, 10); // <= prm will be discarded after 10 sec
+cache.delayedExec(id, prm, 10); // <= prm will be resolved after 10 sec
+```
+
+### Available methods:
+
+- *start(redisUrl):* Instantiate the cache so that we can call get/set data.
+- *getValue(key):* Get value by its key
+- *setValue(key, value, ttl):* Set a value using a key (ttl - Time to live - is in seconds)
+- *delValue(key):* Delete a value by its key
+- *wrap(key, fallbackPromise, ttl, isJSON):* Wrap a promise in cache.
+  - *key*: (string) identifier
+  - *fallbackPromise*: (function that returns a promise) How we get the data to read/write
+  - *ttl*: (integer) Time to live in seconds
+  - *isJSON*: (boolean - default:false) encode objects to a JSON before saving into the cache
+- *delayedExec(identifier, prm, delayTime)*: Delay an promise execution of a promise across different microservices. The promise is resolved only if not another delayedExecution has been trigged during the same timeframe (delayTime).
+  - *identifier*: (string) how we identify this execution
+  - *prm*: (function that returns a promise) the promise that we want to execute
+  - *delayTime*: (integer - in seconds) timeframe when there wasn't any delayed execution with the same identifier
 
 
-## petitservice/lib/gcloud
+## Express common middlewares
+
+Set common middlewares for an express app
+
+
+### Full example
+```js
+const express = require('express');
+const expressMiddleWare = require('petitservice').expressMiddleWare;
+
+const app = express();
+expressMiddleWare.addStandard(app);
+expressMiddleWare.addCompression(app);
+
+expressMiddleWare.addLogs(app);
+
+app.get('/', (req, res) => {
+  res.send('Bonjour!');
+});
+
+expressMiddleWare.addErrorHandlers(app);
+```
+
+### Available methods:
+- *addStandard(app)*: Add the following middlewares:
+  - Disable 'x-powered-by' header
+  - Define 'trsut proxy' to accept forwared ip
+  - Body parser (json and form data)
+  - Set a health check endpoints '/~health' that returns 'ok'
+  - Remove trailing slashes on urls
+- *addCompression(app)*: Adds GZIP compression middleware
+- *addLogs(app)*: logs http request using the logger module (See section about logger)
+- addErrorHandlers(app, isHTML):
+  - Report errors to google cloud engine if it's defined
+  - Endpoint to handle not found pages (if isHTML is set to true it will render the view `404`)
+  - Endpoint to handle internal errors (if isHTML is set to true it will render the view `500`)
+
+## Google Cloud Monitoring (Trace, Debug, Errors)
 
 Monitoring using Google Stackdriver: Debug, Trace, Errors.
 
 ### Full Example:
 
 ```js
-const gcloud = require('petitservice/lib/gcloud');
+const gcloud = require('petitservice').gcloud;
 
 // Environment variable:
 // - ENABLE_GCLOUD_TRACE: "1"
@@ -129,18 +233,17 @@ gcloud.init(process.cwd(), {
 - *GCLOUD_ERRORS_LOGLEVEL*: Log level for gcloud/error (default: 1)
 
 
-
-## petitservice/lib/logger
+## Logger
 
 Log data on the console (using winston), and report errors to gcloud/error if enabled
 
 ### Full Example:
 
 ```js
-const logger = require('petitservice/lib/logger');
+const logger = require('petitservice').logger;
 
 logger.debug('bonjour');
-logger.info('hello');
+logger.info('un café et un croissant chaud');
 logger.error(new Error('Something broke'));
 
 // You can use middlewares for express
@@ -167,20 +270,16 @@ app.use(logger.errorLogger);
 - debug
 - silly
 
-
-
-
-## petitservice/lib/db
+## Database
 
 Connect to a Postgres database using [knex](http://knexjs.org/).
 
-Check section `petitservice/lib/service_loader` for details to initiate the database
+Check section Service Loader for details to initiate the database
 
 ### Full Example:
 
 ```js
-const serviceLoader = require('petitservice/lib/service_loader');
-const dbLoader = require('petitservice/lib/db');
+const petitservice = require('petitservice');
 
 serviceLoader()
 .db({
@@ -188,10 +287,10 @@ serviceLoader()
   pgDatabase: 'postgres',
 })
 .done(() => {
+  const db = petitservice.db.getKnexObject();
   db.raw('SELECT 1;')
   .then((data) => {
-    const db = dbLoader.getKnexObject();
-    console.log(data);
+    petitservice.logger.info(data);
   });
 });
 
@@ -205,7 +304,7 @@ serviceLoader()
 - POSTGRES_ENV_POSTGRES_PASSWORD: Postgres password
 - DB_NAME: Postgres database
 
-## petitservice/lib/db/tasks
+## Database tasks
 
 - *run(action, database)*: Run a task to the database
   - action: can be `createdb`, `dropdb`, `migrate`, `seed`, `init` (createdb + migrate + seed), `refresh` (dropdb + init)
@@ -214,3 +313,9 @@ serviceLoader()
 - *dropdb(database)*: Drop database
 - *migrate(database)*: Migrate database
 - *seed(database)*: Seed database
+
+
+
+# Contribute
+
+You are welcomed to fork the project and make pull requests. Or just file an issue or suggestion 😊
