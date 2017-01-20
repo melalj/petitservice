@@ -1,6 +1,6 @@
 {
   "name": "petitservice",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Set of modules designed for Microservice architecture",
   "main": "index.js",
   "scripts": {
