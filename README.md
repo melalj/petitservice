@@ -240,6 +240,8 @@ Log data on the console (using winston), and report errors to gcloud/error if en
 ### Full Example:
 
 ```js
+// You may also set the log lovel using the environment variable: LOG_LEVEL: 'debug'
+
 const logger = require('petitservice').logger;
 
 logger.debug('bonjour');
@@ -263,6 +265,7 @@ app.use(logger.errorLogger);
 - errorLogger: Express middleware to log errors
 - gcloudErrorsMiddleWare: Express middleware to report express errors to gcloud
 - error
+- outputError (like error, but without reporting that to gcloud)
 - warn
 - info
 - log
