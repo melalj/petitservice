@@ -5,9 +5,20 @@
 
 [![npm](https://img.shields.io/npm/dt/petitservice.svg)]() [![npm](https://img.shields.io/npm/v/petitservice.svg)]() [![npm](https://img.shields.io/npm/l/petitservice.svg)]() [![David](https://img.shields.io/david/melalj/petitservice.svg)]()
 
-Set of modules designed for Microservice architecture.
+Set of helpers designed for a Microservice architecture.
 
-## Service Loader
+Available helpers:
+- [Service Loader](#serviceLoader)
+- [Coworkers helper](#coworkers)
+- [RabbitMQ Publisher](#publisher)
+- [Redis cache](#cache)
+- [Express common middlewares](#expressMiddleware)
+- [Google Cloud Monitoring (Trace, Debug, Errors)](#gcloud)
+- [Logger](#logger)
+- [Database helpers](#dbHelpers)
+- [Database tasks](#dbTasks)
+
+## <a name="serviceLoader"></a> Service Loader
 
 Start different services (sequentially) with graceful exit handler.
 
@@ -21,12 +32,14 @@ Supported features:
 - Gracefully exit all services on exceptions
 
 
-### Full Example:
+#### Full Example:
 
 ```js
-const petitservice = require('petitservice');
+const serviceLoader = require('petitservice/lib/serviceLoader');
 
-return petitservice.serviceLoader()
+const config = require('./config');
+
+return serviceLoader()
 .ping([
   config.apiUrlHost,
   config.redisHost,
@@ -48,17 +61,17 @@ return petitservice.serviceLoader()
 .done();
 ```
 
-### Available functions chains:
+#### Available functions chains:
 
 - *ping(hostList, [options])*: Check if hostnames are alive
   - `hostList` (array of host to ping) host format: `hostname:port`
-  - `options.failureMax` (integer, how many attempts should we try before we exit the process, default: 5)
-  - `options.frequency` (integer, how many milliseconds should wait before checking again hostnames, default: 30000)
+  - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
+  - `options.frequency` (optional integer, how many milliseconds should wait before checking again hostnames, default: 30000)
 - *db([options])*: Initiate database, checks if database is alive and destroy knex on exit
-  - `options.pgUrl` (string, postgres url, default: set in `./lib/db/config.js`)
-  - `options.pgDatabase` (string, database to query, default: postgres)
-  - `options.failureMax` (integer, how many attempts should we try before we exit the process, default: 5)
-  - `options.frequency` (integer, how many milliseconds should wait before checking again the database, default: 30000)
+  - `options.pgUrl` (optional string, postgres url, default: set in `./lib/db/config.js`)
+  - `options.pgDatabase` (optional string, database to query, default: postgres)
+  - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
+  - `options.frequency` (optional integer, how many milliseconds should wait before checking again the database, default: 30000)
 - *cache(redisUrl)*: Start cache for `petitservice.cache`
   - `redisUrl` (required string, redis url)
 - *publisher(amqUrl, publisherExchanges)*: Connect to RabbitMQ and assert exchanges for `petitservice.publisher`, and close it when exit
@@ -80,15 +93,80 @@ return petitservice.serviceLoader()
   - `customPromise` (function that returns a Promise)
 
 
-## Cache
+
+
+## <a name="coworkers"></a> Coworkers helper
+
+Connect to RabbitMQ using [coworkers](https://github.com/tjmehta/coworkers). Assert a consumer on a specific queue. Assert exchanges (type: direct) for publications.
+
+#### Full example
+
+```js
+const serviceLoader = require('petitservice/lib/serviceLoader');
+
+return serviceLoader()
+.coworkers({ // documentation on coworkers options is located on serviceLoader doc
+  amqUrl: 'amqp://guest:guest@localhost:5672',
+  consumer: () => require('./my-consumer'),
+  consumerQueue: 'my-queue',
+  consumerExchange: 'my-consumer-exchange',
+  publisherExchanges: ['my-publication-exchange'],
+})
+.done();
+```
+
+
+## <a name="publisher"></a> RabbitMQ publisher
+
+Connect to RabbitMQ using [amqp.node](https://github.com/squaremo/amqp.node) - And asserts exchanges (type: direct) for publications.
+
+#### Example using serviceLoader
+
+```js
+const serviceLoader = require('petitservice/lib/serviceLoader');
+const publisher = require('petitservice/lib/db');
+
+serviceLoader()
+.publisher('amqp://guest:guest@localhost:5672', ['my-exchange'])
+.done(() => {
+  publisher.publish({ myKey: 'myValue' }, 'my-exchange');
+});
+```
+
+#### Example without serviceLoader
+
+```js
+const publisher = require('petitservice/lib/publisher');
+
+// Using serviceLoader
+publisher.start('amqp://guest:guest@localhost:5672', ['my-exchange'])
+.then(() => {
+  // publish a message
+  publisher.publish({ myKey: 'myValue' }, 'my-exchange');
+});
+
+```
+
+#### Available methods:
+
+- *start(amqpUrl, exchangeNames)*: Connect to amqpUrl and assert exchanges
+  - *amqpUrl:* (string) amq URL, note: we set the heartbeat to 0 by default
+  - *exchangeNames:* (array) list of exchanges to assert
+- *publish(payload, exchangeName)*: Publish a payload to an exchange.
+  - *payload:* (object) data to publish
+  - *exchangeName:* (string) where we'd like to publish the data
+- *close()*: Close amq connection
+
+
+## <a name="cache"></a> Redis Cache
 
 Cache manager using Redis
 
-### Full example
+#### Full example
 
 ```js
-const petitservice = require('petitservice');
-const cache = petitservice.cache;
+const cache = require('petitservice/lib/cache');
+const logger = require('petitservice/lib/logger');
 
 cache.start(config.redisUrl);
 
@@ -100,32 +178,32 @@ const cacheKey = 'bob';
 cache.getValue(cacheKey)
 .then((cachedValue) => {
   if (!cachedValue) {
-    petitservice.logger.info(`Setting value for ${cacheKey}`);
+    logger.info(`Setting value for ${cacheKey}`);
     return cache.getValue(cacheKey, 'alice', 60);
   }
-  petitservice.logger.info(`I remember ${cachedValue}`);
+  logger.info(`I remember ${cachedValue}`);
 })
 .then((cachedValue) => {
-  petitservice.logger.info(`Bye ${cacheKey}`);
+  logger.info(`Bye ${cacheKey}`);
   return cache.delValue(cacheKey);
 });
 
 // Wrap a function
 cache.wrap(userId, () => models.getUser(userId), 10)
 .then((cacheUser) => {
-  petitservice.logger.info(`Bonjour ${cacheUser.firstName}`);
+  logger.info(`Bonjour ${cacheUser.firstName}`);
 });
 
 // Delayed Execution
 const id = 'abc';
 const prm = () => {
-  return models.insertKeystroke(Math.random());
+  return models.insertKeystroke(id, Math.random());
 }
 cache.delayedExec(id, prm, 10); // <= prm will be discarded after 10 sec
 cache.delayedExec(id, prm, 10); // <= prm will be resolved after 10 sec
 ```
 
-### Available methods:
+#### Available methods:
 
 - *start(redisUrl):* Instantiate the cache so that we can call get/set data.
 - *getValue(key):* Get value by its key
@@ -142,15 +220,15 @@ cache.delayedExec(id, prm, 10); // <= prm will be resolved after 10 sec
   - *delayTime*: (integer - in seconds) timeframe when there wasn't any delayed execution with the same identifier
 
 
-## Express common middlewares
+## <a name="expressMiddleWare"></a> Express common middlewares
 
 Set common middlewares for an express app
 
 
-### Full example
+#### Full example
 ```js
 const express = require('express');
-const expressMiddleWare = require('petitservice').expressMiddleWare;
+const expressMiddleWare = require('petitservice/lib/expressMiddleWare');
 
 const app = express();
 expressMiddleWare.addStandard(app);
@@ -165,7 +243,7 @@ app.get('/', (req, res) => {
 expressMiddleWare.addErrorHandlers(app);
 ```
 
-### Available methods:
+#### Available methods:
 - *addStandard(app)*: Add the following middlewares:
   - Disable 'x-powered-by' header
   - Define 'trsut proxy' to accept forwared ip
@@ -179,14 +257,14 @@ expressMiddleWare.addErrorHandlers(app);
   - Endpoint to handle not found pages (if isHTML is set to true it will render the view `404`)
   - Endpoint to handle internal errors (if isHTML is set to true it will render the view `500`)
 
-## Google Cloud Monitoring (Trace, Debug, Errors)
+## <a name="gcloud"></a> Google Cloud Monitoring (Trace, Debug, Errors)
 
 Monitoring using Google Stackdriver: Debug, Trace, Errors.
 
-### Full Example:
+#### Full Example:
 
 ```js
-const gcloud = require('petitservice').gcloud;
+const gcloud = require('petitservice/lib/gcloud');
 
 // Environment variable:
 // - ENABLE_GCLOUD_TRACE: "1"
@@ -197,12 +275,12 @@ const gcloud = require('petitservice').gcloud;
 
 gcloud.init(process.cwd(), {
   trace: {
-    ignoreUrls: [/^\/assets/, /\/~*health/],
+    ignoreUrls: [/^\/asserts/, /\/~*health/],
   }
 });
 ```
 
-### Available methods:
+#### Available methods:
 
 - *init(projectRootDirectory, [options])*: Initiate gcloud
   - options: (optional object) more details below
@@ -214,14 +292,14 @@ gcloud.init(process.cwd(), {
 - *runInSpan()*: gcloud-trace runInSpan (see [trace](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/) documentation)
 - *runInRootSpan()*: gcloud-trace runInRootSpan (see [trace](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/) documentation)
 
-### Available options:
+#### Available options:
 
 - *credentials*: object, gcloud credentials (default: base64decode(GCLOUD_STACKDRIVER_CREDENTIALS))
 - *trace*: object, options to override default configuration: https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/
 - *debug*: object, options to override default configuration: https://github.com/GoogleCloudPlatform/cloud-debug-nodejs/
 - *error*: object, options to override default configuration: https://github.com/GoogleCloudPlatform/cloud-errors-nodejs/
 
-### Environment variables:
+#### Environment variables:
 
 - *GCLOUD_STACKDRIVER_CREDENTIALS*: required string, base64 of the gcloud json key
 - *GCLOUD_PROJECT*: required string: gcloud project name
@@ -233,16 +311,21 @@ gcloud.init(process.cwd(), {
 - *GCLOUD_ERRORS_LOGLEVEL*: Log level for gcloud/error (default: 1)
 
 
-## Logger
+## <a name="logger"></a> Logger
 
 Log data on the console (using winston), and report errors to gcloud/error if enabled
 
-### Full Example:
+The default LogLevels depends on the NOD_ENV:
+- `debug` for `development` env
+- `info` for `production` env
+- `error` for `test` env
+
+#### Full Example:
 
 ```js
-// You may also set the log lovel using the environment variable: LOG_LEVEL: 'debug'
+// You may also set the log level using the environment variable: LOG_LEVEL: 'debug'
 
-const logger = require('petitservice').logger;
+const logger = require('petitservice/lib/logger');
 
 logger.debug('bonjour');
 logger.info('un café et un croissant chaud');
@@ -260,7 +343,7 @@ if (logger.gcloudErrorsMiddleWare) {
 app.use(logger.errorLogger);
 ```
 
-### Exported methods:
+#### Exported methods:
 - requestLogger: Express middleware to log requests
 - errorLogger: Express middleware to log errors
 - gcloudErrorsMiddleWare: Express middleware to report express errors to gcloud
@@ -273,16 +356,18 @@ app.use(logger.errorLogger);
 - debug
 - silly
 
-## Database
+## <a name="dbHelpers"></a> Database helpers
 
 Connect to a Postgres database using [knex](http://knexjs.org/).
 
 Check section Service Loader for details to initiate the database
 
-### Full Example:
+#### Full Example:
 
 ```js
-const petitservice = require('petitservice');
+const serviceLoader = require('petitservice/lib/serviceLoader');
+const logger = require('petitservice/lib/logger');
+const db = require('petitservice/lib/db');
 
 serviceLoader()
 .db({
@@ -290,16 +375,23 @@ serviceLoader()
   pgDatabase: 'postgres',
 })
 .done(() => {
-  const db = petitservice.db.getKnexObject();
+  const db = db.getKnexObject();
   db.raw('SELECT 1;')
   .then((data) => {
-    petitservice.logger.info(data);
+    logger.info(data);
   });
 });
 
 ```
 
-### Used environment variables
+#### Exported methods:
+ - *init([pgUrl], [pgDatabase])*: Initiate [knex object](http://knexjs.org/#Installation-client) in memory
+  - *pgUrl*: (option string, postgres url, default: set in `./lib/db/config.js`)
+  - *pgDatabase*: (option string, postgres database, default: set in `./lib/db/config.js`)
+- *getKnexObject()*: returns [knex object](http://knexjs.org/#Installation-client)
+
+
+#### Used environment variables
 
 - POSTGRES_PORT_5432_TCP_ADDR: Postgres hostname
 - POSTGRES_PORT_5432_TCP_PORT: Postgres port
@@ -307,7 +399,9 @@ serviceLoader()
 - POSTGRES_ENV_POSTGRES_PASSWORD: Postgres password
 - DB_NAME: Postgres database
 
-## Database tasks
+## <a name="dbTasks"></a> Database tasks
+
+#### Available tasks on `require('petitservice/lib/db/tasks')`:
 
 - *run(action, database)*: Run a task to the database
   - action: can be `createdb`, `dropdb`, `migrate`, `seed`, `init` (createdb + migrate + seed), `refresh` (dropdb + init)
@@ -317,7 +411,24 @@ serviceLoader()
 - *migrate(database)*: Migrate database
 - *seed(database)*: Seed database
 
+#### Full example:
 
+`node ./dbTasks.js createdb development`
+
+```js
+const tasks = require('petitservice/lib/db/tasks');
+
+const pgDatabases = {
+  production: 'myDb',
+  test: 'myDb_test',
+  development: 'myDb_dev',
+};
+
+const env = process.argv[process.argv.length - 1];
+const action = process.argv[process.argv.length - 2];
+
+tasks.run(action, pgDatabases[env]);
+```
 
 # Contribute
 

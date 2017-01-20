@@ -1,7 +1,7 @@
 {
   "name": "petitservice",
   "version": "1.0.4",
-  "description": "Set of modules designed for Microservice architecture",
+  "description": "Set of helpers designed for a Microservice architecture.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
