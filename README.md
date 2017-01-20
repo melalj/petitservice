@@ -150,7 +150,7 @@ publisher.start('amqp://guest:guest@localhost:5672', ['my-exchange'])
 #### Available methods:
 
 - *start(amqpUrl, exchangeNames)*: Connect to amqpUrl and assert exchanges
-  - *amqpUrl:* (string) amq URL, note: we set the heartbeat to 0 by default
+  - *amqpUrl:* (string) amq URL, note: we set the heartbeat to 20 by default
   - *exchangeNames:* (array) list of exchanges to assert
 - *publish(payload, exchangeName)*: Publish a payload to an exchange.
   - *payload:* (object) data to publish
