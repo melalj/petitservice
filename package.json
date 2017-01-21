@@ -1,6 +1,6 @@
 {
   "name": "petitservice",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Set of helpers designed for a Microservice architecture.",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,7 @@
   "dependencies": {
     "@google/cloud-debug": "^0.9.1",
     "@google/cloud-errors": "^0.1.1",
-    "@google/cloud-trace": "^0.6.0",
+    "@google/cloud-trace": "0.5.10",
     "amqplib": "^0.5.1",
     "bluebird": "^3.4.7",
     "body-parser": "^1.15.2",

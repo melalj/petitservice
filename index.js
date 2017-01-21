@@ -6,7 +6,7 @@ const cache = require('./lib/utils');
 const expressMiddleware = require('./lib/expressMiddleware');
 const gcloud = require('./lib/gcloud');
 const logger = require('./lib/logger');
-const publisher = require('./lib/publisher');
+const amq = require('./lib/amq');
 const serviceLoader = require('./lib/serviceLoader');
 const utils = require('./lib/utils');
 
@@ -17,7 +17,7 @@ module.exports = {
   expressMiddleware,
   gcloud,
   logger,
-  publisher,
+  amq,
   serviceLoader,
   utils,
 };

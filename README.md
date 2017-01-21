@@ -9,8 +9,7 @@ Set of helpers designed for a Microservice architecture.
 
 Available helpers:
 - [Service Loader](#serviceLoader)
-- [Coworkers helper](#coworkers)
-- [RabbitMQ Publisher](#publisher)
+- [AMQ publisher/consumer](#amq)
 - [Redis cache](#cache)
 - [Express common middlewares](#expressMiddleware)
 - [Google Cloud Monitoring (Trace, Debug, Errors)](#gcloud)
@@ -25,8 +24,7 @@ Start different services (sequentially) with graceful exit handler.
 Supported features:
 - Check if TCP hosts are reachable
 - Start Redis cache manager
-- Start AMQ publisher
-- Start AMQ consumer/publisher using [coworkers](https://github.com/tjmehta/coworkers)
+- Start AMQ publisher/consumer
 - Start postgres database connection using [knex](http://knexjs.org/) (check if it's alive every 30 sec)
 - Start HTTP server (express or http)
 - Gracefully exit all services on exceptions
@@ -36,6 +34,7 @@ Supported features:
 
 ```js
 const serviceLoader = require('petitservice/lib/serviceLoader');
+const logger = require('petitservice/lib/logger');
 
 const config = require('./config');
 
@@ -46,9 +45,17 @@ return serviceLoader()
   config.amqpHost,
 ])
 .cache(config.redisUrl)
-.publisher(config.amqUrl, ['exchange-name1', 'exchange-name2'])
+.amq({
+  amqUrl: 'amqp://guest:guest@localhost:5672',
+  consumerQueue: 'my-queue',
+  assertQueues: ['my-publisher-queue'],
+  consumer: (data, ack) => {
+    logger.info(data);
+    ack(); // acknowledge the message
+  },
+})
 .then(() => {
-  /* Some logic here when we load the service (should return a Promise)*/
+  logger.info('Do something during starting...');
 })
 .db({
   pgUrl: config.pgUrl,
@@ -56,9 +63,11 @@ return serviceLoader()
 })
 .express(() => require('./express_app.js'), config.httpPort)
 .onExit(() => {
-  /* Some logic here when we exit (should return a Promise)*/
+  logger.info('Do something during exit...');
 })
-.done();
+.done(() => {
+  logger.info('Everything is started!');
+});
 ```
 
 #### Available functions chains:
@@ -72,51 +81,27 @@ return serviceLoader()
   - `options.pgDatabase` (optional string, database to query, default: postgres)
   - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
   - `options.frequency` (optional integer, how many milliseconds should wait before checking again the database, default: 30000)
-- *cache(redisUrl)*: Start cache for `petitservice.cache`
+- *cache(redisUrl)*: Start cache for `petitservice/lib/cache`
   - `redisUrl` (required string, redis url)
-- *publisher(amqUrl, publisherExchanges)*: Connect to RabbitMQ and assert exchanges for `petitservice.publisher`, and close it when exit
-  - `amqUrl` (required string, amq url)
-  - `publisherExchanges` (required array, list of exchanges to assert)
-- *coworkers(options)*: Connect to RabbitMQ using coworkers, and close it when exit. `options` is required.
+- *amq(options)*: Connect to RabbitMQ using [amqp.node](https://github.com/squaremo/amqp.node), and close it when the program exit. `options` is required.
   - `options.amqUrl` (required string, amq url)
-  - `options.consumer` (required function that returns coworkers app, https://github.com/tjmehta/coworkers)
-  - `options.consumerExchange` (required string, exchange name where the consumer queue is binded)
-  - `options.consumerQueue` (required string, consumer queue name)
-  - `options.publisherExchanges` (optional array, list of publisher exchange name)
+  - `options.assertQueues` (optional array, list of queue to create if they haven't been created before. if consumerQueue is set, it will be asserted as well automatically.
+  - `options.consumerCb(data, ack)` (required function): handles a message to consume. It gets as parameter respectively the received `data` (already JSON parsed) and `ack` function to run when we want to acknowledge the message.
+  - `options.consumerQueue` (required string): consumer queue name
+  - `options.consumerPrefetch` (optional integer): how many message we consume simultaneously - default: 1
+  - `options.onError(err, msg)` (optional function): error handler when there's an exception on the consumer. Gets as parameter `err` as error object and `msg` as raw message. Defaults a warning message.
 - *express(expressApp, port)*: Start express HTTP server, and close it when exit
   - `expressApp` (required function that returns express app, https://github.com/expressjs/express) - We advice you to use the require inside this function.
   - `port` (integer, HTTP port. default: `80`)
-- *then(customPromise)*: Run a custom process on the process
-  - `customPromise` (function that returns a Promise)
+- *then(cb)*: Run a function during starting
+  - `cb` (function that performs action, can return a promise as well)
 - *done([callback])*: Add this at the end of the chain to start the service. it can take a callback function as parameter that executes when everything is loaded.
-- *onExit(customPromise)*: Action to perform when closing Gracefully
-  - `customPromise` (function that returns a Promise)
+- *onExit(cb)*: Action to perform when closing Gracefully
+  - `cb` (function that performs action, can return a promise as well)
 
 
 
-
-## <a name="coworkers"></a> Coworkers helper
-
-Connect to RabbitMQ using [coworkers](https://github.com/tjmehta/coworkers). Assert a consumer on a specific queue. Assert exchanges (type: direct) for publications.
-
-#### Full example
-
-```js
-const serviceLoader = require('petitservice/lib/serviceLoader');
-
-return serviceLoader()
-.coworkers({ // documentation on coworkers options is located on serviceLoader doc
-  amqUrl: 'amqp://guest:guest@localhost:5672',
-  consumer: () => require('./my-consumer'),
-  consumerQueue: 'my-queue',
-  consumerExchange: 'my-consumer-exchange',
-  publisherExchanges: ['my-publication-exchange'],
-})
-.done();
-```
-
-
-## <a name="publisher"></a> RabbitMQ publisher
+## <a name="amq"></a> AMQ publisher/consumer
 
 Connect to RabbitMQ using [amqp.node](https://github.com/squaremo/amqp.node) - And asserts exchanges (type: direct) for publications.
 
@@ -124,39 +109,54 @@ Connect to RabbitMQ using [amqp.node](https://github.com/squaremo/amqp.node) - A
 
 ```js
 const serviceLoader = require('petitservice/lib/serviceLoader');
-const publisher = require('petitservice/lib/db');
+const amq = require('petitservice/lib/amq');
 
 serviceLoader()
-.publisher('amqp://guest:guest@localhost:5672', ['my-exchange'])
+.amq({
+  amqUrl: 'amqp://guest:guest@localhost:5672',
+  consumerQueue: 'my-queue',
+  assertQueues: ['my-publisher-queue'],
+  consumer: (data, ack) => {
+    logger.info(data);
+    ack(); // acknowledge the message
+  },
+})
 .done(() => {
-  publisher.publish({ myKey: 'myValue' }, 'my-exchange');
+  amq.publish({ myKey: 'myValue' }, 'my-exchange');
 });
 ```
 
 #### Example without serviceLoader
 
 ```js
-const publisher = require('petitservice/lib/publisher');
+const amq = require('petitservice/lib/amq');
 
 // Using serviceLoader
-publisher.start('amqp://guest:guest@localhost:5672', ['my-exchange'])
+amq.start({
+  amqUrl: 'amqp://guest:guest@localhost:5672',
+  consumerQueue: 'my-consumer-queue',
+  assertQueues: ['my-publisher-queue'],
+  consumer: (data, ack) => {
+    logger.info(data);
+    ack(); // acknowledge the message
+  },
+})
 .then(() => {
   // publish a message
-  publisher.publish({ myKey: 'myValue' }, 'my-exchange');
+  amq.publish({ myKey: 'myValue' }, 'my-publisher-queue');
 });
 
 ```
 
 #### Available methods:
 
-- *start(amqpUrl, exchangeNames)*: Connect to amqpUrl and assert exchanges
-  - *amqpUrl:* (string) amq URL, note: we set the heartbeat to 20 by default
-  - *exchangeNames:* (array) list of exchanges to assert
-- *publish(payload, exchangeName)*: Publish a payload to an exchange.
+- *start(options)*: Connect to RabbitMQ and assert publisher/consumer. Documentation on the options is available on [serviceLoader](#serviceLoader)
+- *publish(payload, queueName)*: Publish a payload to a queue.
   - *payload:* (object) data to publish
-  - *exchangeName:* (string) where we'd like to publish the data
+  - *queueName:* (string) where we'd like to publish the data
 - *close()*: Close amq connection
-
+- *getChannel()*: returns active channel
+- *getChannel()*: returns active connection
 
 ## <a name="cache"></a> Redis Cache
 
