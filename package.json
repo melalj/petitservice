@@ -34,7 +34,7 @@
     "migrations",
     "utils",
     "consumer",
-    "service",
+    "service"
   ],
   "author": "Mohammed Elalj",
   "license": "MIT",
