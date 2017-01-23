@@ -151,12 +151,13 @@ amq.start({
 #### Available methods:
 
 - *start(options)*: Connect to RabbitMQ and assert publisher/consumer. Documentation on the options is available on [serviceLoader](#serviceLoader)
-- *publish(payload, queueName)*: Publish a payload to a queue.
+- *publish(payload, queueName, [persistent])*: Publish a payload to a queue.
   - *payload:* (object) data to publish
   - *queueName:* (string) where we'd like to publish the data
+  - *persistent:* (optional boolean) if we want to persist the message, default false
 - *close()*: Close amq connection
 - *getChannel()*: returns active channel
-- *getChannel()*: returns active connection
+- *getConnection()*: returns active connection
 
 ## <a name="cache"></a> Redis Cache
 
