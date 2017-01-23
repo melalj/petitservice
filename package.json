@@ -1,7 +1,7 @@
 {
   "name": "petitservice",
-  "version": "1.0.7",
-  "description": "Set of helpers designed for a Microservice architecture.",
+  "version": "1.0.8",
+  "description": "Set of helpers designed for a Microservice architecture",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,6 +10,32 @@
     "type": "git",
     "url": "https://github.com/melalj/petitservice.git"
   },
+  "keywords": [
+    "microservice",
+    "helpers",
+    "bootstrap",
+    "service loader",
+    "graceful exit",
+    "express",
+    "middlewares",
+    "gcloud",
+    "google-cloud",
+    "trace",
+    "debug",
+    "errors",
+    "logger",
+    "rabbitmq",
+    "redis",
+    "cache",
+    "pg",
+    "postgres",
+    "knex",
+    "database",
+    "migrations",
+    "utils",
+    "consumer",
+    "service",
+  ],
   "author": "Mohammed Elalj",
   "license": "MIT",
   "bugs": {
