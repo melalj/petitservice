@@ -1,7 +1,7 @@
 # Petit Service 🍬
 
 [![Twitter URL](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://github.com/melalj/petitservice)
-[![GitHub stars](https://img.shields.io/github/stars/melalj/petitservice.svg?style=social&label=Star&maxAge=2592005)]()
+[![GitHub stars](https://img.shields.io/github/stars/melalj/petitservice.svg?style=social&label=Star&maxAge=2592003)]()
 
 [![npm](https://img.shields.io/npm/dt/petitservice.svg)]() [![npm](https://img.shields.io/npm/v/petitservice.svg)]() [![npm](https://img.shields.io/npm/l/petitservice.svg)]() [![David](https://img.shields.io/david/melalj/petitservice.svg)]()
 
@@ -47,7 +47,7 @@ return serviceLoader()
 .cache(config.redisUrl)
 .amq({
   amqUrl: 'amqp://guest:guest@localhost:5672',
-  consumerQueue: 'my-queue',
+  consumerQueue: 'my-consumer-queue',
   assertQueues: ['my-publisher-queue'],
   consumer: (data, ack) => {
     logger.info(data);
@@ -103,7 +103,7 @@ return serviceLoader()
 
 ## <a name="amq"></a> AMQ publisher/consumer
 
-Connect to RabbitMQ using [amqp.node](https://github.com/squaremo/amqp.node) - And asserts exchanges (type: direct) for publications.
+Connect to RabbitMQ using [amqp.node](https://github.com/squaremo/amqp.node), Asserts queues, and consume messages from a queue.
 
 #### Example using serviceLoader
 
@@ -114,7 +114,7 @@ const amq = require('petitservice/lib/amq');
 serviceLoader()
 .amq({
   amqUrl: 'amqp://guest:guest@localhost:5672',
-  consumerQueue: 'my-queue',
+  consumerQueue: 'my-consumer-queue',
   assertQueues: ['my-publisher-queue'],
   consumer: (data, ack) => {
     logger.info(data);
@@ -122,7 +122,7 @@ serviceLoader()
   },
 })
 .done(() => {
-  amq.publish({ myKey: 'myValue' }, 'my-exchange');
+  amq.publish({ myKey: 'myValue' }, 'my-publisher-queue');
 });
 ```
 
@@ -417,6 +417,8 @@ serviceLoader()
 `node ./dbTasks.js createdb development`
 
 ```js
+// dbTasks.js
+
 const tasks = require('petitservice/lib/db/tasks');
 
 const pgDatabases = {
