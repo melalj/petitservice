@@ -1,6 +1,6 @@
 {
   "name": "petitservice",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Set of helpers designed for a Microservice architecture",
   "main": "index.js",
   "scripts": {
@@ -43,18 +43,18 @@
   },
   "homepage": "https://github.com/melalj/petitservice",
   "dependencies": {
-    "@google-cloud/debug-agent": "^2.0.0",
-    "@google-cloud/error-reporting": "^0.1.2",
-    "@google-cloud/trace-agent": "^2.0.0",
+    "@google-cloud/debug-agent": "^2.1.2",
+    "@google-cloud/error-reporting": "^0.2.1",
+    "@google-cloud/trace-agent": "^2.1.0",
     "amqplib": "^0.5.1",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.2",
     "cache-manager": "2.4.0",
     "cache-manager-redis": "0.4.0",
-    "compression": "^1.6.2",
+    "compression": "^1.7.0",
     "express-winston": "^2.4.0",
     "knex": "^0.13.0",
-    "pg": "^6.2.3",
+    "pg": "^7.0.0",
     "request": "^2.81.0",
     "winston": "^2.3.1"
   }
