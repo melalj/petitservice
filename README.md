@@ -247,7 +247,7 @@ expressMiddleWare.addErrorHandlers(app);
 #### Available methods:
 - *addStandard(app)*: Add the following middlewares:
   - Disable 'x-powered-by' header
-  - Define 'trsut proxy' to accept forwared ip
+  - Define 'trust proxy' to accept forwared ip
   - Body parser (json and form data)
   - Set a health check endpoints '/~health' that returns 'ok'
   - Remove trailing slashes on urls
