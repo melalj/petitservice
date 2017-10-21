@@ -276,7 +276,7 @@ const gcloud = require('petitservice/lib/gcloud');
 
 gcloud.init(process.cwd(), {
   trace: {
-    ignoreUrls: [/^\/asserts/, /\/~*health/],
+    ignoreUrls: [/^\/assets/, /\/~*health/],
   }
 });
 ```
