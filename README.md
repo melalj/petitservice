@@ -11,6 +11,7 @@ Available helpers:
 - [Service Loader](#serviceLoader)
 - [AMQ publisher/consumer](#amq)
 - [Redis cache](#cache)
+- [MongoDb client](#mongo)
 - [Express common middlewares](#expressMiddleware)
 - [Google Cloud Monitoring (Trace, Debug, Errors)](#gcloud)
 - [Logger](#logger)
@@ -24,6 +25,7 @@ Start different services (sequentially) with graceful exit handler.
 Supported features:
 - Check if TCP hosts are reachable
 - Start Redis cache manager
+- Start MongoDB client
 - Start AMQ publisher/consumer
 - Start postgres database connection using [knex](http://knexjs.org/) (check if it's alive every 30 sec)
 - Start HTTP server (express or http)
@@ -43,8 +45,10 @@ return serviceLoader()
   config.apiUrlHost,
   config.redisHost,
   config.amqpHost,
+  config.mongoHost,
 ])
 .cache(config.redisUrl)
+.mongo(config.mongoUrl)
 .amq({
   amqUrl: 'amqp://guest:guest@localhost:5672',
   consumerQueue: 'my-consumer-queue',
@@ -83,6 +87,8 @@ return serviceLoader()
   - `options.frequency` (optional integer, how many milliseconds should wait before checking again the database, default: 30000)
 - *cache(redisUrl)*: Start cache for `petitservice/lib/cache`
   - `redisUrl` (required string, redis url)
+- *mongo(mongoUrl)*: Start mongoDb for `petitservice/lib/mongo`
+  - `mongoUrl` (required string, mongo url)
 - *amq(options)*: Connect to RabbitMQ using [amqp.node](https://github.com/squaremo/amqp.node), and close it when the program exit. `options` is required.
   - `options.amqUrl` (required string, amq url)
   - `options.assertQueues` (optional array, list of queue to create if they haven't been created before. if consumerQueue is set, it will be asserted as well automatically.
@@ -220,6 +226,37 @@ cache.delayedExec(id, prm, 10); // <= prm will be resolved after 10 sec
   - *prm*: (function that returns a promise) the promise that we want to execute
   - *delayTime*: (integer - in seconds) timeframe when there wasn't any delayed execution with the same identifier
 
+
+## <a name="mongo"></a> MongoDb client
+
+MongoDB helpers
+
+#### Full example
+
+```js
+const mongo = require('petitservice/lib/mongo');
+const logger = require('petitservice/lib/logger');
+
+return mongo.start(config.mongoUrl)
+  .then(() => {
+    const db = mongo.db(config.mongoDbname);
+    const collection = db.collection('documents');
+    // Insert some documents
+    return collection.insertMany([
+      {a : 1}, {a : 2}, {a : 3}
+    ])
+      .then(() => collection.find({}).toArray())
+      .then((docs) => logger.info(docs));
+  })
+  .then(() => mongo.close());
+
+```
+
+#### Available methods:
+
+- *start(mongoUrl):* Instantiate the mongoDb client
+- *db(key):* Get database instance
+- *close():* Close mongodb client
 
 ## <a name="expressMiddleWare"></a> Express common middlewares
 

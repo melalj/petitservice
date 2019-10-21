@@ -2,7 +2,8 @@
 
 const db = require('./lib/db');
 const dbTasks = require('./lib/db/tasks');
-const cache = require('./lib/utils');
+const cache = require('./lib/cache');
+const mongo = require('./lib/mongo');
 const expressMiddleware = require('./lib/expressMiddleware');
 const gcloud = require('./lib/gcloud');
 const logger = require('./lib/logger');
@@ -14,6 +15,7 @@ module.exports = {
   db,
   dbTasks,
   cache,
+  mongo,
   expressMiddleware,
   gcloud,
   logger,
