@@ -42,10 +42,10 @@ const config = require('./config');
 
 return serviceLoader()
 .ping([
-  config.apiUrlHost,
-  config.redisHost,
-  config.amqpHost,
-  config.mongoHost,
+  config.apiUrl,
+  config.redisUrl,
+  config.amqpUrl,
+  config.mongoUrl,
 ])
 .cache(config.redisUrl)
 .mongo(config.mongoUrl)
@@ -76,8 +76,8 @@ return serviceLoader()
 
 #### Available functions chains:
 
-- *ping(hostList, [options])*: Check if hostnames are alive
-  - `hostList` (array of host to ping) host format: `hostname:port`
+- *ping(urlList, [options])*: Check if hostnames are alive
+  - `urlList` (array of url to ping) format: `protocol://[user:pass@]hostname:port`
   - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
   - `options.frequency` (optional integer, how many milliseconds should wait before checking again hostnames, default: 30000)
 - *db([options])*: Initiate database, checks if database is alive and destroy knex on exit
