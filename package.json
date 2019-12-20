@@ -1,6 +1,6 @@
 {
   "name": "petitservice",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Set of helpers designed for a Microservice architecture",
   "main": "index.js",
   "scripts": {
@@ -37,26 +37,26 @@
     "consumer",
     "service"
   ],
-  "author": "Mohammed Elalj",
+  "author": "Simo Elalj",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/melalj/petitservice/issues"
   },
   "homepage": "https://github.com/melalj/petitservice",
   "dependencies": {
-    "@google-cloud/debug-agent": "4.2.0",
+    "@google-cloud/debug-agent": "4.2.1",
     "@google-cloud/error-reporting": "1.1.2",
-    "@google-cloud/trace-agent": "4.2.3",
+    "@google-cloud/trace-agent": "4.2.4",
     "amqplib": "0.5.5",
     "bluebird": "3.7.2",
     "body-parser": "1.19.0",
     "cache-manager": "2.10.1",
     "cache-manager-redis": "0.6.0",
     "compression": "1.7.4",
-    "express-winston": "4.0.1",
-    "knex": "0.20.3",
-    "mongodb": "3.3.3",
-    "pg": "7.14.0",
+    "express-winston": "4.0.2",
+    "knex": "0.20.4",
+    "mongodb": "3.4.1",
+    "pg": "7.15.1",
     "request": "2.88.0",
     "winston": "3.2.1"
   }
