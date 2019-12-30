@@ -1,6 +1,6 @@
 {
   "name": "petitservice",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Set of helpers designed for a Microservice architecture",
   "main": "index.js",
   "scripts": {
@@ -54,9 +54,9 @@
     "cache-manager-redis": "0.6.0",
     "compression": "1.7.4",
     "express-winston": "4.0.2",
-    "knex": "0.20.4",
+    "knex": "0.20.6",
     "mongodb": "3.4.1",
-    "pg": "7.15.1",
+    "pg": "7.17.0",
     "request": "2.88.0",
     "winston": "3.2.1"
   }
