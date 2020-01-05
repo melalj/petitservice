@@ -61,10 +61,7 @@ return serviceLoader()
 .then(() => {
   logger.info('Do something during starting...');
 })
-.db({
-  pgUrl: config.pgUrl,
-  pgDatabase: config.pgDatabase,
-})
+.db() // env variables: PG_URL and DB_NAME need to be defined
 .express(() => require('./express_app.js'), config.httpPort)
 .onExit(() => {
   logger.info('Do something during exit...');
@@ -80,11 +77,9 @@ return serviceLoader()
   - `urlList` (array of url to ping) format: `protocol://[user:pass@]hostname:port`
   - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
   - `options.frequency` (optional integer, how many milliseconds should wait before checking again hostnames, default: 30000)
-- *db([options])*: Initiate database, checks if database is alive and destroy knex on exit
-  - `options.pgUrl` (optional string, postgres url, default: set in `./lib/db/config.js`)
-  - `options.pgDatabase` (optional string, database to query, default: postgres)
-  - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
-  - `options.frequency` (optional integer, how many milliseconds should wait before checking again the database, default: 30000)
+- *db()*: Initiate database, checks if database is alive and destroy knex on exit. Required envirnoment variables:
+  - `PG_URL` (required string, postgres url)
+  - `DB_NAME` (required string, database to query, default: postgres)
 - *cache(redisUrl)*: Start cache for `petitservice/lib/cache`
   - `redisUrl` (required string, redis url)
 - *mongo(mongoUrl)*: Start mongoDb for `petitservice/lib/mongo`
@@ -408,10 +403,7 @@ const logger = require('petitservice/lib/logger');
 const db = require('petitservice/lib/db');
 
 serviceLoader()
-.db({
-  pgUrl: 'postgres://root:@localhost',
-  pgDatabase: 'postgres',
-})
+.db() // env variables: PG_URL and DB_NAME need to be defined
 .done(() => {
   const db = db.getKnexObject();
   db.raw('SELECT 1;')
