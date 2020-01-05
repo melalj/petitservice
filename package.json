@@ -55,7 +55,7 @@
     "compression": "1.7.4",
     "express-winston": "4.0.2",
     "mongodb": "3.4.1",
-    "knex": "0.15.2",
+    "knex": "0.19.5",
     "pg": "7.4.3",
     "request": "2.88.0",
     "winston": "3.2.1"
