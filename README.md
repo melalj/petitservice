@@ -470,6 +470,34 @@ const action = process.argv[process.argv.length - 2];
 tasks.run(action, pgDatabases[env]);
 ```
 
+## Generate GCLOUD_STACKDRIVER_CREDENTIALS
+
+### Enable API
+
+```
+https://console.cloud.google.com/flows/enableapi?apiid=clouddebugger.googleapis.com
+https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace.googleapis.com
+https://console.cloud.google.com/flows/enableapi?apiid=logging.googleapis.com
+https://console.cloud.google.com/flows/enableapi?apiid=clouderrorreporting.googleapis.com
+```
+
+### If not running on google cloud
+
+```sh
+# CREATE GCLOUD_STACKDRIVER_CREDENTIALS
+PROJECT_NAME="***"
+gcloud iam service-accounts create stackdriver --display-name=stackdriver
+gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member serviceAccount:stackdriver@${PROJECT_NAME}.iam.gserviceaccount.com --role roles/cloudtrace.admin
+gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member serviceAccount:stackdriver@${PROJECT_NAME}.iam.gserviceaccount.com --role roles/clouddebugger.agent
+gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member serviceAccount:stackdriver@${PROJECT_NAME}.iam.gserviceaccount.com --role roles/logging.admin
+gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member serviceAccount:stackdriver@${PROJECT_NAME}.iam.gserviceaccount.com --role roles/errorreporting.admin
+
+
+```
+
+### If not running on google cloud
+
+
 # Contribute
 
 You are welcomed to fork the project and make pull requests. Or just file an issue or suggestion 😊

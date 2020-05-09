@@ -1,5 +1,3 @@
-'use strict';
-
 const db = require('./lib/db');
 const dbTasks = require('./lib/db/tasks');
 const cache = require('./lib/cache');
