@@ -1,6 +1,6 @@
 {
   "name": "petitservice",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Set of helpers designed for a Microservice architecture",
   "main": "index.js",
   "scripts": {
@@ -56,7 +56,7 @@
     "bluebird": "3.7.2",
     "body-parser": "1.19.0",
     "cache-manager": "3.3.0",
-    "cache-manager-redis": "0.6.0",
+    "cache-manager-ioredis": "2.1.0",
     "compression": "1.7.4",
     "express-winston": "4.0.5",
     "mongodb": "3.5.9",
