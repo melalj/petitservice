@@ -47,7 +47,7 @@ return serviceLoader()
   config.amqpUrl,
   config.mongoUrl,
 ])
-.cache(config.redisUrl)
+.cache({ host: 'localhost', port: 6379, auth_pass: 'xxx' })
 .mongo(config.mongoUrl)
 .amq({
   amqUrl: 'amqp://guest:guest@localhost:5672',
@@ -85,8 +85,8 @@ return serviceLoader()
   - `options.pgDatabase` (optional string, database to query, default: postgres)
   - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
   - `options.frequency` (optional integer, how many milliseconds should wait before checking again the database, default: 30000)
-- *cache(redisUrl)*: Start cache for `petitservice/lib/cache`
-  - `redisUrl` (required string, redis url)
+- *cache(redisOpts)*: Start cache for `petitservice/lib/cache`
+  - `redisOpts` (required object, { host, port, auth_pass })
 - *mongo(mongoUrl)*: Start mongoDb for `petitservice/lib/mongo`
   - `mongoUrl` (required string, mongo url)
 - *amq(options)*: Connect to RabbitMQ using [amqp.node](https://github.com/squaremo/amqp.node), and close it when the program exit. `options` is required.
