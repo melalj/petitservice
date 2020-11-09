@@ -435,7 +435,7 @@ serviceLoader()
 - POSTGRES_PORT_5432_TCP_PORT: Postgres port
 - POSTGRES_ENV_POSTGRES_USER: Postgres username
 - POSTGRES_ENV_POSTGRES_PASSWORD: Postgres password
-- DB_NAME: Postgres database
+- PG_DATABASE: Postgres database
 
 ## <a name="dbTasks"></a> Database tasks
 
