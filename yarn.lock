@@ -89,7 +89,7 @@
     is "^3.3.0"
     lodash.has "^4.5.2"
 
-"@google-cloud/logging-winston@4.0.1":
+"@google-cloud/logging-winston@^4.0.1":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@google-cloud/logging-winston/-/logging-winston-4.0.1.tgz#f01b2a770bc4fa6c6459b3512d1689b97f6e04c2"
   integrity sha512-5zEBBsyY5eNidMmOKrZBTp8U3YeQrJ+5Lqowlk1UuFz/92Y12RurAk670NsWjCQKuGmFlrVMEKqKNdQ0Kfz54A==

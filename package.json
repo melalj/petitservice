@@ -1,6 +1,6 @@
 {
   "name": "petitservice",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Set of helpers designed for a Microservice architecture",
   "main": "index.js",
   "scripts": {
@@ -51,8 +51,8 @@
   "dependencies": {
     "@google-cloud/debug-agent": "5.1.3",
     "@google-cloud/error-reporting": "2.0.0",
+    "@google-cloud/logging-winston": "^4.0.1",
     "@google-cloud/trace-agent": "5.1.1",
-    "@google-cloud/logging-winston": "4.0.1",
     "amqplib": "0.6.0",
     "bluebird": "3.7.2",
     "body-parser": "1.19.0",
@@ -60,9 +60,10 @@
     "cache-manager-ioredis": "2.1.0",
     "compression": "1.7.4",
     "express-winston": "4.0.5",
-    "mongodb": "3.6.3",
     "knex": "0.21.12",
+    "mongodb": "3.6.3",
     "pg": "8.4.2",
+    "triple-beam": "^1.3.0",
     "winston": "3.3.3"
   }
 }
