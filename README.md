@@ -8,12 +8,12 @@
 Set of helpers designed for a Microservice architecture.
 
 Available helpers:
+
 - [Service Loader](#serviceLoader)
 - [AMQ publisher/consumer](#amq)
 - [Redis cache](#cache)
 - [MongoDb client](#mongo)
-- [Express common middlewares](#expressMiddleware)
-- [Google Cloud Monitoring (Trace, Debug, Errors)](#gcloud)
+- [Express common middlewares](#expressMiddleWare)
 - [Logger](#logger)
 - [Database helpers](#dbHelpers)
 - [Database tasks](#dbTasks)
@@ -23,16 +23,15 @@ Available helpers:
 Start different services (sequentially) with graceful exit handler.
 
 Supported features:
+
 - Check if TCP hosts are reachable
 - Start Redis cache manager
 - Start MongoDB client
 - Start AMQ publisher/consumer
-- Start postgres database connection using [knex](http://knexjs.org/) (check if it's alive every 30 sec)
 - Start HTTP server (express or http)
 - Gracefully exit all services on exceptions
 
-
-#### Full Example:
+#### Full Example
 
 ```js
 const serviceLoader = require('petitservice/lib/serviceLoader');
@@ -61,10 +60,6 @@ return serviceLoader()
 .then(() => {
   logger.info('Do something during starting...');
 })
-.db({
-  pgUrl: config.pgUrl,
-  pgDatabase: config.pgDatabase,
-})
 .express(() => require('./express_app.js'), config.httpPort)
 .onExit(() => {
   logger.info('Do something during exit...');
@@ -74,17 +69,12 @@ return serviceLoader()
 });
 ```
 
-#### Available functions chains:
+#### Available functions chains
 
 - *ping(urlList, [options])*: Check if hostnames are alive
   - `urlList` (array of url to ping) format: `protocol://[user:pass@]hostname:port`
   - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
   - `options.frequency` (optional integer, how many milliseconds should wait before checking again hostnames, default: 30000)
-- *db([options])*: Initiate database, checks if database is alive and destroy knex on exit
-  - `options.pgUrl` (optional string, postgres url, default: set in `./lib/db/config.js`)
-  - `options.pgDatabase` (optional string, database to query, default: postgres)
-  - `options.failureMax` (optional integer, how many attempts should we try before we exit the process, default: 5)
-  - `options.frequency` (optional integer, how many milliseconds should wait before checking again the database, default: 30000)
 - *cache(redisOpts)*: Start cache for `petitservice/lib/cache`
   - `redisOpts` (required object, { host, port, auth_pass })
 - *mongo(mongoUrl)*: Start mongoDb for `petitservice/lib/mongo`
@@ -97,15 +87,13 @@ return serviceLoader()
   - `options.consumerPrefetch` (optional integer): how many message we consume simultaneously - default: 1
   - `options.onError(err, msg)` (optional function): error handler when there's an exception on the consumer. Gets as parameter `err` as error object and `msg` as raw message. Defaults a warning message.
 - *express(expressApp, port)*: Start express HTTP server, and close it when exit
-  - `expressApp` (required function that returns express app, https://github.com/expressjs/express) - We advice you to use the require inside this function.
+  - `expressApp` (required function that returns express app, <https://github.com/expressjs/express>) - We advice you to use the require inside this function.
   - `port` (integer, HTTP port. default: `80`)
 - *then(cb)*: Run a function during starting
   - `cb` (function that performs action, can return a promise as well)
 - *done([callback])*: Add this at the end of the chain to start the service. it can take a callback function as parameter that executes when everything is loaded.
 - *onExit(cb)*: Action to perform when closing Gracefully
   - `cb` (function that performs action, can return a promise as well)
-
-
 
 ## <a name="amq"></a> AMQ publisher/consumer
 
@@ -154,7 +142,7 @@ amq.start({
 
 ```
 
-#### Available methods:
+#### Available methods
 
 - *start(options)*: Connect to RabbitMQ and assert publisher/consumer. Documentation on the options is available on [serviceLoader](#serviceLoader)
 - *publish(payload, queueName, [options])*: Publish a payload to a queue.
@@ -210,7 +198,7 @@ cache.delayedExec(id, prm, 10); // <= prm will be discarded after 10 sec
 cache.delayedExec(id, prm, 10); // <= prm will be resolved after 10 sec
 ```
 
-#### Available methods:
+#### Available methods
 
 - *start(redisUrl):* Instantiate the cache so that we can call get/set data.
 - *getValue(key):* Get value by its key
@@ -225,7 +213,6 @@ cache.delayedExec(id, prm, 10); // <= prm will be resolved after 10 sec
   - *identifier*: (string) how we identify this execution
   - *prm*: (function that returns a promise) the promise that we want to execute
   - *delayTime*: (integer - in seconds) timeframe when there wasn't any delayed execution with the same identifier
-
 
 ## <a name="mongo"></a> MongoDb client
 
@@ -252,7 +239,7 @@ return mongo.start(config.mongoUrl)
 
 ```
 
-#### Available methods:
+#### Available methods
 
 - *start(mongoUrl):* Instantiate the mongoDb client
 - *db(key):* Get database instance
@@ -262,8 +249,8 @@ return mongo.start(config.mongoUrl)
 
 Set common middlewares for an express app
 
-
 #### Full example
+
 ```js
 const express = require('express');
 const expressMiddleWare = require('petitservice/lib/expressMiddleWare');
@@ -281,7 +268,8 @@ app.get('/', (req, res) => {
 expressMiddleWare.addErrorHandlers(app);
 ```
 
-#### Available methods:
+#### Available methods
+
 - *addStandard(app)*: Add the following middlewares:
   - Disable 'x-powered-by' header
   - Define 'trsut proxy' to accept forwared ip
@@ -291,74 +279,20 @@ expressMiddleWare.addErrorHandlers(app);
 - *addCompression(app)*: Adds GZIP compression middleware
 - *addLogs(app)*: logs http request using the logger module (See section about logger)
 - addErrorHandlers(app, isHTML):
-  - Report errors to google cloud engine if it's defined
   - Endpoint to handle not found pages (if isHTML is set to true it will render the view `404`)
   - Endpoint to handle internal errors (if isHTML is set to true it will render the view `500`)
 
-## <a name="gcloud"></a> Google Cloud Monitoring (Trace, Debug, Errors)
-
-Monitoring using Google Stackdriver: Debug, Trace, Errors.
-
-#### Full Example:
-
-```js
-const gcloud = require('petitservice/lib/gcloud');
-
-// Environment variable:
-// - ENABLE_GCLOUD_TRACE: "1"
-// - ENABLE_GCLOUD_ERROR: "1"
-// - ENABLE_GCLOUD_DEBUG: "1"
-// - GCLOUD_PROJECT: "my-project"
-// - GCLOUD_STACKDRIVER_CREDENTIALS: "xxxx"
-
-gcloud.init(process.cwd(), {
-  trace: {
-    ignoreUrls: [/^\/asserts/, /\/~*health/],
-  }
-});
-```
-
-#### Available methods:
-
-- *init(projectRootDirectory, [options])*: Initiate gcloud
-  - options: (optional object) more details below
-  - projectRootDirectory: (required, string) Project root directory (where package.json is located)
-- *reportError()*: Report an error to gcloud-errors, error must be an Error object
-- *expressMiddleWare()*: gcloud-errors express middleware
-- *startSpan()*: gcloud-trace startSpan (see [trace](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/) documentation)
-- *endSpan()*: gcloud-trace endSpan (see [trace](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/) documentation)
-- *runInSpan()*: gcloud-trace runInSpan (see [trace](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/) documentation)
-- *runInRootSpan()*: gcloud-trace runInRootSpan (see [trace](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/) documentation)
-
-#### Available options:
-
-- *credentials*: object, gcloud credentials (default: base64decode(GCLOUD_STACKDRIVER_CREDENTIALS))
-- *trace*: object, options to override default configuration: https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/
-- *debug*: object, options to override default configuration: https://github.com/GoogleCloudPlatform/cloud-debug-nodejs/
-- *error*: object, options to override default configuration: https://github.com/GoogleCloudPlatform/cloud-errors-nodejs/
-
-#### Environment variables:
-
-- *GCLOUD_STACKDRIVER_CREDENTIALS*: required string, base64 of the gcloud json key
-- *GCLOUD_PROJECT*: required string: gcloud project name
-- *ENABLE_GCLOUD_TRACE*: option binary: Enable gcloud trace
-- *ENABLE_GCLOUD_ERROR*: option binary: Enable gcloud error reporting
-- *ENABLE_GCLOUD_DEBUG*: option binary: Enable gcloud debug
-- *GCLOUD_DEBUG_LOGLEVEL*: Log level for gcloud/debug (default: 1)
-- *GCLOUD_TRACE_LOGLEVEL*: Log level for gcloud/trace (default: 1)
-- *GCLOUD_ERRORS_LOGLEVEL*: Log level for gcloud/error (default: 1)
-
-
 ## <a name="logger"></a> Logger
 
-Log data on the console (using winston), and report errors to gcloud/error if enabled
+Log data on the console (using winston), and report errors to error if enabled
 
 The default LogLevels depends on the NOD_ENV:
+
 - `debug` for `development` env
 - `info` for `production` env
 - `error` for `test` env
 
-#### Full Example:
+#### Full Example
 
 ```js
 // You may also set the log level using the environment variable: LOG_LEVEL: 'debug'
@@ -373,130 +307,21 @@ logger.error(new Error('Something broke'));
 
 // Request logs
 app.use(logger.requestLogger);
-
-// Error logs
-if (logger.gcloudErrorsMiddleWare) {
-  app.use(logger.gcloudErrorsMiddleWare);
-}
 app.use(logger.errorLogger);
 ```
 
-#### Exported methods:
+#### Exported methods
+
 - requestLogger: Express middleware to log requests
 - errorLogger: Express middleware to log errors
-- gcloudErrorsMiddleWare: Express middleware to report express errors to gcloud
 - error
-- outputError (like error, but without reporting that to gcloud)
+- outputError (like error)
 - warn
 - info
 - log
 - verbose
 - debug
 - silly
-
-## <a name="dbHelpers"></a> Database helpers
-
-Connect to a Postgres database using [knex](http://knexjs.org/).
-
-Check section Service Loader for details to initiate the database
-
-#### Full Example:
-
-```js
-const serviceLoader = require('petitservice/lib/serviceLoader');
-const logger = require('petitservice/lib/logger');
-const db = require('petitservice/lib/db');
-
-serviceLoader()
-.db({
-  pgUrl: 'postgres://root:@localhost',
-  pgDatabase: 'postgres',
-})
-.done(() => {
-  const db = db.getKnexObject();
-  db.raw('SELECT 1;')
-  .then((data) => {
-    logger.info(data);
-  });
-});
-
-```
-
-#### Exported methods:
- - *init([pgUrl], [pgDatabase])*: Initiate [knex object](http://knexjs.org/#Installation-client) in memory
-  - *pgUrl*: (option string, postgres url, default: set in `./lib/db/config.js`)
-  - *pgDatabase*: (option string, postgres database, default: set in `./lib/db/config.js`)
-- *getKnexObject()*: returns [knex object](http://knexjs.org/#Installation-client)
-
-
-#### Used environment variables
-
-- POSTGRES_PORT_5432_TCP_ADDR: Postgres hostname
-- POSTGRES_PORT_5432_TCP_PORT: Postgres port
-- POSTGRES_ENV_POSTGRES_USER: Postgres username
-- POSTGRES_ENV_POSTGRES_PASSWORD: Postgres password
-- PG_DATABASE: Postgres database
-
-## <a name="dbTasks"></a> Database tasks
-
-#### Available tasks on `require('petitservice/lib/db/tasks')`:
-
-- *run(action, database)*: Run a task to the database
-  - action: can be `createdb`, `dropdb`, `migrate`, `seed`, `init` (createdb + migrate + seed), `refresh` (dropdb + init)
-  - database: database name
-- *createdb(database)*: Create database
-- *dropdb(database)*: Drop database
-- *migrate(database)*: Migrate database
-- *seed(database)*: Seed database
-
-#### Full example:
-
-`node ./dbTasks.js createdb development`
-
-```js
-// dbTasks.js
-
-const tasks = require('petitservice/lib/db/tasks');
-
-const pgDatabases = {
-  production: 'myDb',
-  test: 'myDb_test',
-  development: 'myDb_dev',
-};
-
-const env = process.argv[process.argv.length - 1];
-const action = process.argv[process.argv.length - 2];
-
-tasks.run(action, pgDatabases[env]);
-```
-
-## Generate GCLOUD_STACKDRIVER_CREDENTIALS
-
-### Enable API
-
-```
-https://console.cloud.google.com/flows/enableapi?apiid=clouddebugger.googleapis.com
-https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace.googleapis.com
-https://console.cloud.google.com/flows/enableapi?apiid=logging.googleapis.com
-https://console.cloud.google.com/flows/enableapi?apiid=clouderrorreporting.googleapis.com
-```
-
-### If not running on google cloud
-
-```sh
-# CREATE GCLOUD_STACKDRIVER_CREDENTIALS
-PROJECT_NAME="***"
-gcloud iam service-accounts create stackdriver --display-name=stackdriver
-gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member serviceAccount:stackdriver@${PROJECT_NAME}.iam.gserviceaccount.com --role roles/cloudtrace.admin
-gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member serviceAccount:stackdriver@${PROJECT_NAME}.iam.gserviceaccount.com --role roles/clouddebugger.agent
-gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member serviceAccount:stackdriver@${PROJECT_NAME}.iam.gserviceaccount.com --role roles/logging.admin
-gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member serviceAccount:stackdriver@${PROJECT_NAME}.iam.gserviceaccount.com --role roles/errorreporting.admin
-
-
-```
-
-### If not running on google cloud
-
 
 # Contribute
 
