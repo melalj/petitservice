@@ -284,7 +284,7 @@ expressMiddleWare.addErrorHandlers(app);
 
 ## <a name="logger"></a> Logger
 
-Log data on the console (using winston), and report errors to error if enabled
+Log data on the console (using pino), and report errors to error if enabled
 
 The default LogLevels depends on the NOD_ENV:
 
