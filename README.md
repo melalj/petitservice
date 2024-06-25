@@ -277,7 +277,7 @@ expressMiddleWare.addErrorHandlers(app);
   - Set a health check endpoints '/~health' that returns 'ok'
   - Remove trailing slashes on urls
 - *addCompression(app)*: Adds GZIP compression middleware
-- *addLogs(app)*: logs http request using the logger module (See section about logger)
+- *addLogs(app, addLogs)*: logs http request using the logger module (See section about logger)
 - addErrorHandlers(app, isHTML):
   - Endpoint to handle not found pages (if isHTML is set to true it will render the view `404`)
   - Endpoint to handle internal errors (if isHTML is set to true it will render the view `500`)
